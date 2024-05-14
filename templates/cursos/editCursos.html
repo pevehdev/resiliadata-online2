@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% block body %}
+    <div class="row">
+        <div class="col-md-4 offset-md-4">
+            <div class="card card-body">
+                <form action="/updateCursos/{{cursos[0]}}" method="post">
+                    <div class="form-group">
+                        <label for="nome_curso" >Nome do Curso</label>
+                        <input type="text" name="nome_curso" value="{{cursos[1]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao" > Descrição: </label>
+                        <input type="text" name="descricao" value="{{cursos[2]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="duracao" > Duração: </label>
+                        <input type="text" name="duracao" value="{{cursos[3]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="modulos" > Modulos </label>
+                        <input type="text" name="modulos" value="{{cursos[4]}}" class="form-control">
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">Update</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+    {% endblock %}

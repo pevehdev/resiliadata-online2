@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block body %}
+    <div class="row">
+        <div class="col-md-4 offset-md-4">
+            <div class="card card-body">
+                <form action="/updateTurmas/{{turmas[0]}}" method="post">
+                    <div class="form-group">
+                        <label for="nome_turma" >Nome da Turma</label>
+                        <input type="text" name="nome_turma" value="{{turmas[1]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="horario" > Horário </label>
+                        <input type="text" name="horario" value="{{turmas[2]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="localizacao" > Localização </label>
+                        <input type="text" name="localizacao" value="{{turmas[3]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="data_inicio" > Modulos </label>
+                        <input type="text" name="data_inicio" value="{{turmas[4]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="data_termino" > Modulos </label>
+                        <input type="text" name="data_termino" value="{{turmas[5]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">Update</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+    {% endblock %}

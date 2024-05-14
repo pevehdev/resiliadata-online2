@@ -1,0 +1,173 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="row">
+    <div class="col-md-12">
+
+        <div class="card card-body mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">Cadastrar Facilitador</h3>
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalCadastro">
+                    <i class="fas fa-plus"></i> Adicionar Facilitador
+                </button>
+            </div>
+            <div class="mt-3 text-center">
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dissmiss="alert" aria-label="close">
+                        <span aria-hidden="true">x</span>
+                    </button>
+                </div>
+                {% endfor %}
+                {% endif %}
+                {% endwith %}
+                <img src="{{ url_for('static', filename='estudante.png') }}" alt="Imagem de Facilitador" class="img-fluid"
+                    style="max-width: 200px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <table id="example" class="table table-striped table-bordered" style="width:100%">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pessoa_ID</th>
+                    <th>Area</th>
+                    <th>Horario</th>
+                    <th>Localização</th>
+                    <th>Data_Contrato</th>
+                    <th>Salario</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in lista_facilitadores %}
+                <tr>
+                    <td>{{row[0]}}</td>
+                    <td>{{row[1]}}</td>
+                    <td>{{row[2]}}</td>
+                    <td>{{row[3]}}</td>
+                    <td>{{row[4]}}</td>
+                    <td>{{row[5]}}</td>
+                    <td>{{row[6]}}</td>
+                    <td width="130">
+                        <a href="/editFacilitadores/{{row[0]}}" class="btn btn-secondary btn-sm">edit</a>
+                        <a href="/deleteFacilitadores/{{row[0]}}" class="btn btn-danger btn-delete btn-sm">delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+               
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de Cadastro -->
+<div class="modal fade" id="modalCadastro" tabindex="-1" role="dialog" aria-labelledby="modalCadastroLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalCadastroLabel">Cadastrar Novo Facilitador</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <form action="{{url_for('add_facilitadores')}}" method="POST">
+                            <div class="form-group">
+                                <label for="nome">Nome</label>
+                                <input type="text" class="form-control" name="nome" id="nome" placeholder="Nome" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="sobrenome">Sobrenome</label>
+                                <input type="text" class="form-control" name="sobrenome" id="sobrenome"
+                                    placeholder="Sobrenome" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" class="form-control" name="email" id="email" placeholder="Email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="telefone">Telefone</label>
+                                <input type="text" class="form-control" name="telefone" id="telefone"
+                                    placeholder="Telefone" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="data_nasc">Selecione uma data</label>
+                                <input type="text" name="data_nasc" class="form-control data" id="data_nasc" placeholder="Selecione uma data" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="genero">Gênero</label>
+                                <input type="text" class="form-control" name="genero" id="genero" placeholder="Gênero" required>
+                            </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="data_matricula">Area</label>
+                            <input type="text" class="form-control" name="area" id="area"
+                                placeholder="Area" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="horario">horario</label>
+                            <input type="text" class="form-control" name="horario" id="horario"
+                                placeholder="horario" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="Localizacao">Localização do Polo</label>
+                            <input type="text" class="form-control" name="localizacao" id="Localizacao" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="data_contrato">Selecione uma data</label>
+                            <input type="text" class="form-control data" name="data_contrato" id="data_contrato"
+                                placeholder="Selecione uma data" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="salario">Salário</label>
+                            <input type="text" class="form-control" name="salario" id="salario" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cep">CEP</label>
+                            <input type="text" class="form-control" name="cep" id="cep" placeholder="CEP" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="rua">Rua</label>
+                            <input type="text" class="form-control" name="rua" id="rua" placeholder="Rua" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cidade">Cidade</label>
+                            <input type="text" class="form-control" name="cidade" id="cidade" placeholder="Cidade" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bairro">Bairro</label>
+                            <input type="text" class="form-control" name="bairro" id="bairro" placeholder="Bairro" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="pais">País</label>
+                            <input type="text" class="form-control" name="pais" id="pais" placeholder="País" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="row justify-content-center">
+                    <div class="col-md-6 text-center">
+                        <button type="submit" class="btn btn-primary btn-block">Cadastrar Facilitador</button>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='APIViaCep.js') }}"></script>
+</div>
+
+
+{% endblock %}

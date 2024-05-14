@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block body %}
+    <div class="row">
+        <div class="col-md-4 offset-md-4">
+            <div class="card card-body">
+                <form action="/updateFacilitadores/{{facilitadores[0]}}" method="post">
+                    <div class="form-group">
+                        <label for="area" >Área</label>
+                        <input type="text" name="area" value="{{facilitadores[2]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="horario" > Horario: </label>
+                        <input type="text" name="horario" value="{{facilitadores[3]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="localizacao" > Localização do Polo </label>
+                        <input type="text" name="localizacao" value="{{facilitadores[4]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="data_contrato" > Data do contrato </label>
+                        <input type="text" name="data_contrato" value="{{facilitadores[5]}}" class="form-control data">
+                    </div>
+                    <div class="form-group">
+                        <label for="salario" > Salario </label>
+                        <input type="text" name="salario" value="{{facilitadores[6]}}" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary btn-block">Update</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+    {% endblock %}

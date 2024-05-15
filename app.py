@@ -35,17 +35,18 @@ url = os.getenv("DATABASE_URL")
 app = Flask(__name__)
 app.secret_key="fpzivhzm"
 #configurações do banco de dados
+try:
+    db_connection = psycopg2.connect(url)
+    cursor = db_connection.cursor()
+    cursor.execute(CREATE_ENDERECO_TABLE)
+    cursor.execute(CREATE_PESSOA_TABLE)
+    cursor.execute(CREATE_ESTUDANTES_TABLE)
+    cursor.execute(CREATE_FACILITADORES_TABLE)
+    cursor.execute(CREATE_CURSOS_TABLE)
+    cursor.execute(CREATE_TURMAS_TABLE)
 
-db_connection = psycopg2.connect(url)
-cursor = db_connection.cursor()
-cursor.execute(CREATE_ENDERECO_TABLE)
-cursor.execute(CREATE_PESSOA_TABLE)
-cursor.execute(CREATE_ESTUDANTES_TABLE)
-cursor.execute(CREATE_FACILITADORES_TABLE)
-cursor.execute(CREATE_CURSOS_TABLE)
-cursor.execute(CREATE_TURMAS_TABLE)
-
-
+except psycopg2.Error as e:
+    print("Erro ao conectar ao banco de dados:", e)
 
 # DB_HOST = "localhost"
 # DB_NAME = "resiliadata"
@@ -64,53 +65,68 @@ def home():
 ###########CURSO#######################
 @app.route('/exibirFacilitadores')
 def exibirFacilitadores():
-    sql = "SELECT * from facilitadores"
-    cursor.execute(sql)
-    lista_facilitadores = cursor.fetchall()
-    return render_template('facilitadores/facilitadores.html', lista_facilitadores = lista_facilitadores)
+    try:
+        # Criar uma nova conexão e cursor usando o padrão de gerenciamento de contexto 'with'
+        with psycopg2.connect(url) as db_connection:
+            with db_connection.cursor() as cursor:
+                sql = "SELECT * FROM facilitadores"
+                cursor.execute(sql)
+                lista_facilitadores = cursor.fetchall()
+                return render_template('facilitadores/facilitadores.html', lista_facilitadores=lista_facilitadores)
+    except psycopg2.Error as e:
+        flash("Erro ao executar a consulta no banco de dados")
+        print("Erro ao executar a consulta:", e)
+        return redirect(url_for('home'))
 
+    
 @app.route('/add_facilitadores', methods=['POST'])
 def add_facilitadores():
-    if request.method == 'POST':
-        # Dados do formulário
-        nome = request.form['nome']
-        sobrenome = request.form['sobrenome']
-        email = request.form['email']
-        telefone = request.form['telefone']
-        
-        # Formatar a data de nascimento para o formato correto (aaaa-mm-dd)
-        data_nasc = datetime.strptime(request.form['data_nasc'], '%d/%m/%Y').strftime('%Y-%m-%d')
-        
-        genero = request.form['genero']
-        area = request.form['area']
-        horario = request.form['horario']
-        localizacao = request.form['localizacao']
-        
-        # Formatar a data de contrato para o formato correto (aaaa-mm-dd)
-        data_contrato = datetime.strptime(request.form['data_contrato'], '%d/%m/%Y').strftime('%Y-%m-%d')
-        
-        salario = request.form['salario']
-        rua = request.form['rua']
-        cep = request.form['cep']
-        cidade = request.form['cidade']
-        bairro = request.form['bairro']
-        pais = request.form['pais']
+    try:
+        if request.method == 'POST':
+            # Dados do formulário
+            nome = request.form['nome']
+            sobrenome = request.form['sobrenome']
+            email = request.form['email']
+            telefone = request.form['telefone']
+            
+            # Formatar a data de nascimento para o formato correto (aaaa-mm-dd)
+            data_nasc = datetime.strptime(request.form['data_nasc'], '%d/%m/%Y').strftime('%Y-%m-%d')
+            
+            genero = request.form['genero']
+            area = request.form['area']
+            horario = request.form['horario']
+            localizacao = request.form['localizacao']
+            
+            # Formatar a data de contrato para o formato correto (aaaa-mm-dd)
+            data_contrato = datetime.strptime(request.form['data_contrato'], '%d/%m/%Y').strftime('%Y-%m-%d')
+            
+            salario = request.form['salario']
+            rua = request.form['rua']
+            cep = request.form['cep']
+            cidade = request.form['cidade']
+            bairro = request.form['bairro']
+            pais = request.form['pais']
 
-        # Inserir dados de endereço
-        cursor.execute("INSERT INTO Endereco (rua, cep, cidade, bairro, pais) VALUES (%s,%s,%s,%s,%s) RETURNING id", (rua, cep, cidade, bairro, pais))
-        endereco_id = cursor.fetchone()[0]  # Obtém o ID do endereço inserido
-        
-        # Inserir dados de pessoa associando o ID do endereço
-        cursor.execute("INSERT INTO Pessoa (endereco_id, nome, sobrenome, email, telefone, data_nasc, genero) VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id", (endereco_id, nome, sobrenome, email, telefone, data_nasc, genero))
-        pessoa_id = cursor.fetchone()[0] # Obtém o ID da pessoa inserida
+            # Criar uma nova conexão e cursor usando o padrão de gerenciamento de contexto 'with'
+            with psycopg2.connect(url) as db_connection:
+                with db_connection.cursor() as cursor:
+                    # Inserir dados de endereço
+                    cursor.execute("INSERT INTO Endereco (rua, cep, cidade, bairro, pais) VALUES (%s,%s,%s,%s,%s) RETURNING id", (rua, cep, cidade, bairro, pais))
+                    endereco_id = cursor.fetchone()[0]  # Obtém o ID do endereço inserido
+                    
+                    # Inserir dados de pessoa associando o ID do endereço
+                    cursor.execute("INSERT INTO Pessoa (endereco_id, nome, sobrenome, email, telefone, data_nasc, genero) VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id", (endereco_id, nome, sobrenome, email, telefone, data_nasc, genero))
+                    pessoa_id = cursor.fetchone()[0] # Obtém o ID da pessoa inserida
 
-        # Inserir dados do facilitador associando o ID da pessoa
-        cursor.execute("INSERT INTO Facilitadores (pessoa_id, area, horario, localizacao, data_contrato, salario) VALUES (%s, %s, %s, %s, %s, %s)", (pessoa_id, area, horario, localizacao, data_contrato, salario))
+                    # Inserir dados do facilitador associando o ID da pessoa
+                    cursor.execute("INSERT INTO Facilitadores (pessoa_id, area, horario, localizacao, data_contrato, salario) VALUES (%s, %s, %s, %s, %s, %s)", (pessoa_id, area, horario, localizacao, data_contrato, salario))
 
-        db_connection.commit()
-
-        flash('Facilitador cadastrado com sucesso!')
-        return redirect(url_for('exibirFacilitadores'))
+            flash('Facilitador cadastrado com sucesso!')
+            return redirect(url_for('exibirFacilitadores'))
+    except psycopg2.Error as e:
+        flash("Erro ao cadastrar facilitador")
+        print("Erro ao cadastrar facilitador:", e)
+        return redirect(url_for('home'))
     
 @app.route('/updateFacilitadores/<id>', methods=['POST'])
 def updateFacilitadores(id):
@@ -122,43 +138,88 @@ def updateFacilitadores(id):
         data_contrato = datetime.strptime(request.form['data_contrato'], '%d/%m/%Y').strftime('%Y-%m-%d')
         salario = request.form['salario']
 
+        try:
+            # Criar uma nova conexão e cursor usando o padrão de gerenciamento de contexto 'with'
+            with psycopg2.connect(url) as db_connection:
+                with db_connection.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE Facilitadores
+                        SET area = %s,
+                            horario = %s,
+                            localizacao = %s,
+                            data_contrato = %s,
+                            salario = %s
+                        WHERE id = %s
+                    """, (area, horario, localizacao, data_contrato, salario, id))
+                    flash('Facilitador foi atualizado com sucesso!')
+                    db_connection.commit()
+                    return redirect(url_for('exibirFacilitadores'))
+        except psycopg2.Error as e:
+            flash("Erro ao atualizar o facilitador no banco de dados")
+            print("Erro ao atualizar o facilitador:", e)
+            return redirect(url_for('exibirEstudantes'))
 
-
-        print(area)
-        cursor.execute("""
-        UPDATE Facilitadores
-        SET area = %s,
-            horario = %s,
-            localizacao = %s,
-            data_contrato = %s,
-            salario = %s
-        WHERE id = %s
-        """, (area, horario, localizacao, data_contrato,salario, id))
-        flash('Facilitador foi atualizado com sucesso!')
-        db_connection.commit()
-        return redirect(url_for('exibirFacilitadores'))
-        
-@app.route('/editFacilitadores/<id>', methods = ['POST', 'GET'])
-def editFacilitadores(id):
-    cursor.execute('Select * FROM Facilitadores WHERE id = {0}'.format(id))
-    data = cursor.fetchall()
     
-    return render_template('facilitadores/editFacilitadores.html', facilitadores = data[0] )
+@app.route('/editFacilitadores/<id>', methods=['POST', 'GET'])
+def editFacilitadores(id):
+    try:
+        # Criar uma nova conexão e cursor usando o padrão de gerenciamento de contexto 'with'
+        with psycopg2.connect(url) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM Facilitadores WHERE id = %s', (id,))
+                data = cursor.fetchall()
+                return render_template('facilitadores/editFacilitadores.html', facilitadores=data[0])
+    except psycopg2.Error as e:
+        flash("Erro ao editar facilitador")
+        print("Erro ao editar facilitador:", e)
+        return redirect(url_for('home'))
 
-@app.route('/deleteFacilitadores/<string:id>', methods = ['POST','GET'])
+@app.route('/deleteFacilitadores/<string:id>', methods=['POST', 'GET'])
 def deleteFacilitadores(id):
-    cursor.execute(
-        'DELETE FROM Facilitadores Where id = {0}'.format(id)
-    )
-    cursor.execute(
-        'DELETE FROM Pessoa Where id = {0}'.format(id)
-    )
-    cursor.execute(
-        'DELETE FROM Endereco where id = {0}'.format(id)
-    )
-    db_connection.commit()
-    flash('Funcionario Deletado!')
-    return redirect(url_for('exibirFacilitadores'))
+    try:
+        # Criação da conexão com o banco de dados
+        with psycopg2.connect(url) as db_connection:
+            # Criação do cursor dentro do contexto da conexão
+            with db_connection.cursor() as cursor:
+
+                # Seleciona o id da pessoa associada ao facilitador
+                cursor.execute('SELECT pessoa_id FROM Facilitadores WHERE id = {0}'.format(id))
+                pessoa_id = cursor.fetchone()[0]
+                print(f"Pessoa ID: {pessoa_id}")
+                
+
+                # Seleciona o id do endereço associado à pessoa
+                cursor.execute('SELECT endereco_id FROM Pessoa WHERE id = {0}'.format(pessoa_id))
+                endereco_id = cursor.fetchone()[0]
+
+                print(f"Endereço ID: {endereco_id}")
+
+                # Deleta o registro da tabela facilitadores
+                cursor.execute('DELETE FROM Facilitadores WHERE id = {0}'.format(id))
+                
+                            
+                # Deleta o registro da tabela pessoa associado ao facilitador
+                cursor.execute('DELETE FROM Pessoa WHERE id = %s',(pessoa_id,))
+                
+                              
+                # Deleta o registro da tabela endereco associado à 
+                # pessoa
+                cursor.execute('DELETE FROM Endereco WHERE id = %s',(endereco_id,))
+                
+                # Commit das alterações no banco de dados
+                db_connection.commit()
+
+        # Redireciona para a página de exibição de facilitadores após a exclusão
+        flash('Funcionário deletado com sucesso!')
+        return redirect(url_for('exibirFacilitadores'))
+
+    except psycopg2.Error as e:
+        # Tratamento de exceção para erros no psycopg2
+        # Isso pode incluir logging do erro, retornar uma mensagem de erro personalizada para o cliente, etc.
+        print("Erro ao acessar o banco de dados:", e)
+        # Retorna uma resposta HTTP 500 - Erro interno do servidor
+        return "Ocorreu um erro interno do servidor.", 500
+
 ###########FACILITADOR################
 #############TURMA###################
 @app.route('/exibirTurmas')
@@ -232,25 +293,46 @@ def deleteTurmas(id):
 ###############CURSOS#####################
 @app.route('/exibirCursos')
 def exibirCursos():
-    sql = "SELECT * from Cursos"
-    cursor.execute(sql)
-    lista_cursos = cursor.fetchall()
-    return render_template('cursos/cursos.html', lista_cursos = lista_cursos)
+    try:
+        with psycopg2.connect(url) as db_connect:
+            with db_connect.cursor() as cursor:
+                sql = "SELECT * from Cursos"
+                cursor.execute(sql)
+                lista_cursos = cursor.fetchall()
+                return render_template('cursos/cursos.html', lista_cursos = lista_cursos)
+    except psycopg2.Error as e:  
+        # Tratamento de exceção para erros no psycopg2
+        # Isso pode incluir logging do erro, retornar uma mensagem de erro personalizada para o cliente, etc.
+        print("Erro ao acessar o banco de dados:", e)
+        # Retorna uma resposta HTTP 500 - Erro interno do servidor
+        return "Ocorreu um erro interno do servidor.", 500
+    
 
 @app.route('/addCursos', methods = ['POST'] )
 def addCursos():
-    if request.method == 'POST':
-        # Dados do formulário
-        nome_curso = request.form['nome_curso']
-        descricao = request.form['descricao']
-        duracao = request.form['duracao']
-        modulos = request.form['modulos']
-        # Inserir dados de pessoa associando o ID do endereço
-        cursor.execute("INSERT INTO Cursos( nome_curso, descricao, duracao, modulos) VALUES (%s,%s,%s,%s) RETURNING id", (nome_curso, descricao, duracao, modulos))
-        #Pessoa_id = cursor.fetchone()[0] # Obtém o ID do endereço inserido
-        db_connection.commit()
-        flash('Curso cadastrado com sucesso!')
-        return redirect(url_for('exibirCursos'))
+    try:
+        if request.method == 'POST':
+            # Dados do formulário
+            nome_curso = request.form['nome_curso']
+            descricao = request.form['descricao']
+            duracao = request.form['duracao']
+            modulos = request.form['modulos']
+        with psycopg2.connect(url) as db_connect:
+            with db_connect.cursor() as cursor:
+                # Inserir dados de pessoa associando o ID do endereço
+                cursor.execute("INSERT INTO Cursos( nome_curso, descricao, duracao, modulos) VALUES (%s,%s,%s,%s) RETURNING id", (nome_curso, descricao, duracao, modulos))
+                #Pessoa_id = cursor.fetchone()[0] # Obtém o ID do endereço inserido
+                db_connection.commit()
+                flash('Curso cadastrado com sucesso!')
+                return redirect(url_for('exibirCursos'))
+    except psycopg2.Error as e:
+        # Tratamento de exceção para erros no psycopg2
+        # Isso pode incluir logging do erro, retornar uma mensagem de erro personalizada para o cliente, etc.
+        print("Erro ao acessar o banco de dados:", e)
+        # Retorna uma resposta HTTP 500 - Erro interno do servidor
+        return "Ocorreu um erro interno do servidor.", 500
+    
+        
     
 @app.route('/updateCursos/<id>', methods=['POST'])
 def updateCursos(id):
@@ -259,102 +341,154 @@ def updateCursos(id):
         descricao = request.form['descricao']
         duracao = request.form['duracao']
         modulos = request.form['modulos']
-                
-        cursor.execute("""
-        UPDATE Cursos
-        SET nome_curso = %s,
-            descricao = %s,
-            duracao = %s,
-            modulos = %s
-            
-        WHERE id = %s
-        """, (nome_curso, descricao, duracao, modulos, id))
-        flash('Curso foi atualizado com sucesso!')
-        db_connection.commit()
-        return redirect(url_for('exibirCursos'))
+        try:
+            with psycopg2.connect(url) as db_connect:
+                with db_connect.cursor() as cursor:
+                     cursor.execute("""
+                    UPDATE Cursos
+                    SET nome_curso = %s,
+                        descricao = %s,
+                        duracao = %s,
+                        modulos = %s
+                        
+                    WHERE id = %s
+                    """, (nome_curso, descricao, duracao, modulos, id))
+                flash('Curso foi atualizado com sucesso!')
+                db_connection.commit()
+                return redirect(url_for('exibirCursos'))
+        except psycopg2.Error as e:
+            # Tratamento de exceção para erros no psycopg2
+            # Isso pode incluir logging do erro, retornar uma mensagem de erro personalizada para o cliente, etc.
+            print("Erro ao acessar o banco de dados:", e)
+            # Retorna uma resposta HTTP 500 - Erro interno do servidor
+            return "Ocorreu um erro interno do servidor.", 500
+       
         
 @app.route('/editCursos/<id>', methods = ['POST', 'GET'])
 def editCursos(id):
-    cursor.execute('Select * FROM Cursos WHERE id = {0}'.format(id))
-    data = cursor.fetchall()
-    
-    return render_template('cursos/editCursos.html', cursos = data[0] )
+    try:
+        with psycopg2.connect(url) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute('Select * FROM Cursos WHERE id = {0}'.format(id))
+                data = cursor.fetchall()
+                return render_template('cursos/editCursos.html', cursos = data[0] )
+    except psycopg2.Error as e:
+        # Tratamento de exceção para erros no psycopg2
+        # Isso pode incluir logging do erro, retornar uma mensagem de erro personalizada para o cliente, etc.
+        print("Erro ao acessar o banco de dados:", e)
+        # Retorna uma resposta HTTP 500 - Erro interno do servidor
+        return "Ocorreu um erro interno do servidor.", 500
 
 @app.route('/deleteCursos/<string:id>', methods = ['POST','GET'])
 def deleteCursos(id):
-    cursor.execute(
-        'DELETE FROM Cursos Where id = {0}'.format(id)
-    )
-    # cursor.execute(
-    #     'DELETE FROM Turma Where id = {0}'.format(id)
-    # )
-   
-    db_connection.commit()
-    flash('Curso Deletado!')
-    return redirect(url_for('exibirCursos'))
+    try:
+        with psycopg2.connect(url) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute(
+                'DELETE FROM Cursos Where id = {0}'.format(id))
+    
+                db_connection.commit()
+                flash('Curso Deletado!')
+                return redirect(url_for('exibirCursos'))
+    except psycopg2.Error as e:
+        # Tratamento de exceção para erros no psycopg2
+        # Isso pode incluir logging do erro, retornar uma mensagem de erro personalizada para o cliente, etc.
+        print("Erro ao acessar o banco de dados:", e)
+        # Retorna uma resposta HTTP 500 - Erro interno do servidor
+        return "Ocorreu um erro interno do servidor.", 500
+
+    
+  
 
 ###########ESTUDANTE###################
 ### cADASTRAR ESTUDANTE ###
 
 @app.route('/add_estudante', methods=['POST'])
 def add_estudante():
-    if request.method == 'POST':
-        # Dados do formulário
-        nome = request.form['nome']
-        sobrenome = request.form['sobrenome']
-        email = request.form['email']
-        telefone = request.form['telefone']
-        
-        # Formatar a data de nascimento para o formato correto (aaaa-mm-dd)
-        data_nasc = datetime.strptime(request.form['data_nasc'], '%d/%m/%Y').strftime('%Y-%m-%d')
-        
-        genero = request.form['genero']
-        
-        # Formatar a data de matrícula para o formato correto (aaaa-mm-dd)
-        data_matricula = datetime.strptime(request.form['data_matricula'], '%d/%m/%Y').strftime('%Y-%m-%d')
-        
-        numero_matricula = request.form['numero_matricula']
-        status = request.form['status']
-        rua = request.form['rua']
-        cep = request.form['cep']
-        cidade = request.form['cidade']
-        bairro = request.form['bairro']
-        pais = request.form['pais']
-        
-        # Inserir dados de endereço
-        cursor.execute("INSERT INTO Endereco (rua, cep, cidade, bairro, pais) VALUES (%s,%s,%s,%s,%s) RETURNING id", (rua, cep, cidade, bairro, pais))
-        endereco_id = cursor.fetchone()[0]  # Obtém o ID do endereço inserido
-        
-        # Inserir dados de pessoa associando o ID do endereço
-        cursor.execute("INSERT INTO Pessoa (endereco_id, nome, sobrenome, email, telefone, data_nasc, genero) VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id", (endereco_id, nome, sobrenome, email, telefone, data_nasc, genero))
-        pessoa_id = cursor.fetchone()[0] # Obtém o ID da pessoa inserida
+    try:
+        if request.method == 'POST':
+            # Dados do formulário
+            nome = request.form['nome']
+            sobrenome = request.form['sobrenome']
+            email = request.form['email']
+            telefone = request.form['telefone']
+            
+            # Formatar a data de nascimento para o formato correto (aaaa-mm-dd)
+            data_nasc = datetime.strptime(request.form['data_nasc'], '%d/%m/%Y').strftime('%Y-%m-%d')
+            
+            genero = request.form['genero']
+            
+            # Formatar a data de matrícula para o formato correto (aaaa-mm-dd)
+            data_matricula = datetime.strptime(request.form['data_matricula'], '%d/%m/%Y').strftime('%Y-%m-%d')
+            
+            numero_matricula = request.form['numero_matricula']
+            status = request.form['status']
+            rua = request.form['rua']
+            cep = request.form['cep']
+            cidade = request.form['cidade']
+            bairro = request.form['bairro']
+            pais = request.form['pais']
 
-        # Inserir dados do estudante associando o ID da pessoa
-        cursor.execute("INSERT INTO Estudantes (pessoa_id, data_matricula, numero_matricula, status) VALUES (%s, %s, %s, %s)", (pessoa_id, data_matricula, numero_matricula, status))
+        with psycopg2.connect(url) as db_connection:
+            with db_connection.cursor() as cursor:
+                # Inserir dados de endereço
+                cursor.execute("INSERT INTO Endereco (rua, cep, cidade, bairro, pais) VALUES (%s,%s,%s,%s,%s) RETURNING id", (rua, cep, cidade, bairro, pais))
+                endereco_id = cursor.fetchone()[0]  # Obtém o ID do endereço inserido
+                
+                # Inserir dados de pessoa associando o ID do endereço
+                cursor.execute("INSERT INTO Pessoa (endereco_id, nome, sobrenome, email, telefone, data_nasc, genero) VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id", (endereco_id, nome, sobrenome, email, telefone, data_nasc, genero))
+                pessoa_id = cursor.fetchone()[0] # Obtém o ID da pessoa inserida
 
-        db_connection.commit()
+                # Inserir dados do estudante associando o ID da pessoa
+                cursor.execute("INSERT INTO Estudantes (pessoa_id, data_matricula, numero_matricula, status) VALUES (%s, %s, %s, %s)", (pessoa_id, data_matricula, numero_matricula, status))
 
-        flash('Estudante cadastrado com sucesso!')
-        return redirect(url_for('exibirEstudantes'))
+                db_connection.commit()
+
+                flash('Estudante cadastrado com sucesso!')
+                return redirect(url_for('exibirEstudantes'))
     
+
+    except psycopg2.Error as e:
+        flash("Erro ao cadastrar Estudante")
+        print("Erro ao cadastrar Estudante:", e)
+        return redirect(url_for('home'))
+    
+        
+        
+        
 ### EXIBIR OS VALORES ESTUDANTES ###    
 
 @app.route('/exibirEstudantes')
 def exibirEstudantes():
-    sql = "SELECT * FROM Estudantes"
-    cursor.execute(sql)
-    lista_estudantes = cursor.fetchall()
-    
-    return render_template('estudante.html', lista_estudantes = lista_estudantes)
+    try:
+        with psycopg2.connect(url) as db_connection:
+            with db_connection.cursor() as cursor:
+                sql = "SELECT * FROM Estudantes"
+                cursor.execute(sql)
+                lista_estudantes = cursor.fetchall()
+                return render_template('estudante.html', lista_estudantes = lista_estudantes)
+    except psycopg2.Error as e:
+        flash("Erro ao executar a consulta no banco de dados")
+        print("Erro ao executar a consulta:", e)
+        return redirect(url_for('home'))
 ### EDIT ESTUDANTE ###
 
 @app.route('/editEstudante/<id>', methods = ['POST', 'GET'])
 def editEstudante(id):
-    cursor.execute('SELECT * FROM Estudantes WHERE id = {0}'.format(id))
-    data = cursor.fetchall()
-    print(data[0])
+    try:
+        with psycopg2.connect(url) as db_connection:
+            with db_connection.cursor() as cursor:
+                cursor.execute('SELECT * FROM Estudantes WHERE id = {0}'.format(id))
+                data = cursor.fetchall()
+                print(data[0])
     
-    return render_template('editEstudante.html', estudante = data[0])
+                return render_template('editEstudante.html', estudante = data[0])
+    except:
+        flash("Erro ao editar facilitador")
+        print("Erro ao editar facilitador:", e)
+        return redirect(url_for('home'))
+    
+    
 
 ### ATUALIZAR OS DADOS  ###
 
@@ -366,35 +500,62 @@ def updateEstudante(id):
         numero_matricula = request.form['numero_matricula']
         status = request.form['status']
         
-        cursor.execute("""
-        UPDATE Estudantes
-        SET data_matricula = %s,
-            numero_matricula=%s,
-            status = %s
+        try:
+            with psycopg2.connect(url) as db_connection:
+                with db_connection.cursor() as cursor:
+                    cursor.execute(cursor.execute("""
+                    UPDATE Estudantes
+                    SET data_matricula = %s,
+                        numero_matricula=%s,
+                        status = %s
+                    
+                    WHERE id = %s
+                    """, (data_matricula,numero_matricula, status, id)))
+        except:
+            flash('Estudante foi atualizado com sucesso!')
+            db_connection.commit()
+            return redirect(url_for('exibirEstudantes'))
         
-        WHERE id = %s
-        """, (data_matricula,numero_matricula, status, id))
-        flash('Estudante foi atualizado com sucesso!')
-        db_connection.commit()
-        return redirect(url_for('exibirEstudantes'))
+       
         
 ### DELETAR DADOS ###
-@app.route('/deleteEstudantes/<string:id>', methods = ['POST', 'GET'])
+@app.route('/deleteEstudantes/<string:id>', methods=['POST', 'GET'])
 def deleteEstudantes(id):
-    cursor.execute(
-        'DELETE FROM Estudantes Where id = {0}'.format(id)
-    
-    )
-    cursor.execute(
-        'DELETE FROM Pessoa Where id = {0}'.format(id)
-    )
+    try:
+        # Criação da conexão com o banco de dados
+        with psycopg2.connect(url) as db_connection:
+            # Criação do cursor dentro do contexto da conexão
+            with db_connection.cursor() as cursor:
+                # Seleciona o id da pessoa associada ao estudante
+                cursor.execute('SELECT pessoa_id FROM Estudantes WHERE id = {0}'.format(id))
+                pessoa_id = cursor.fetchone()[0]
+                print(f"Pessoa ID deletado: {pessoa_id}")
 
-    cursor.execute(
-        'DELETE FROM Endereco Where id = {0}'.format(id)
-    )
-    db_connection.commit()
-    flash('Estudante Deletado')
-    return redirect(url_for('exibirEstudantes'))
+                # Seleciona o id do endereço associado à pessoa
+                cursor.execute('SELECT endereco_id FROM Pessoa WHERE id = {0}'.format(pessoa_id))
+                endereco_id = cursor.fetchone()[0]
+                print(f"Endereço ID deletado: {endereco_id}")
+
+                # Deleta o registro da tabela estudantes
+                cursor.execute('DELETE FROM Estudantes WHERE id = {0}'.format(id))
+
+                # Deleta o registro da tabela pessoa associado ao estudante
+                cursor.execute('DELETE FROM Pessoa WHERE id = %s', (pessoa_id,))
+
+                # Deleta o registro da tabela endereco associado à pessoa
+                cursor.execute('DELETE FROM Endereco WHERE id = %s', (endereco_id,))
+
+                # Commit das alterações no banco de dados
+                db_connection.commit()
+                flash('Estudante Deletado')
+                return redirect(url_for('exibirEstudantes'))
+    except psycopg2.Error as e:
+        # Tratamento de exceção para erros no psycopg2
+        # Isso pode incluir logging do erro, retornar uma mensagem de erro personalizada para o cliente, etc.
+        print("Erro ao acessar o banco de dados:", e)
+        # Retorna uma resposta HTTP 500 - Erro interno do servidor
+        return "Ocorreu um erro interno do servidor.", 500
+
 ########### ROTA PESSOA #########################
 
 
@@ -420,6 +581,7 @@ def add_pessoa():
         telefone = request.form['telefone']
         data_nasc = request.form['data_nasc']
         genero = request.form['genero']
+
         cursor.execute("INSERT INTO Pessoa (nome, sobrenome,email, telefone, data_nasc,genero) VALUES (%s,%s,%s,%s,%s,%s)", (nome, sobrenome, email,telefone,data_nasc,genero))
         db_connection.commit()
         flash('Pessoa cadastrada com sucesso!')
